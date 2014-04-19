@@ -1,0 +1,5 @@
+.rake_test_cache
+.DS_Store
+.DS_STORE
+*.sw[op]
+*.p12
