@@ -24,20 +24,12 @@ module Google
         Chef::Log.error("Missing gem 'fog'")
       end
 
-      # TODO(paulrossman): fix
-      if node.default['gce']['google_project_id'].empty? or
-             node.default['gce']['google_client_email'].empty? or
-             node.default['gce']['google_key_location'].empty?
-         raise "Missing required Google authentication parameters in attributes/default.rb"
-      end
-
-      # TODO(paulrossman): fix
       options = {
         :provider => 'google',
-        :google_project => node.default['gce']['google_project_id'],
-        :google_client_email => node.default['gce']['google_client_email'],
-        :google_key_location => node.default['gce']['google_key_location'],
-        :app_name => run_context.cookbook_collection[cookbook_name].metadata.name,
+        :google_project => node['gce']['google_project_id'],
+        :google_client_email => node['gce']['google_client_email'],
+        :google_key_location => node['gce']['google_key_location'],
+        :app_name => "#{run_context.cookbook_collection[cookbook_name].metadata.name}-cookbook",
         :app_version => run_context.cookbook_collection[cookbook_name].metadata.version
       }
 
