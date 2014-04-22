@@ -36,9 +36,9 @@ pair.
 ```ruby
     % knife data bag show gce service_account
     {
-      "google_project_id": "my-gce-project",
-      "google_client_email": "my-gce-project@developer.gserviceaccount.com",
-      "google_key_location": "/home/user/.my-gce-project-private-key.p12"
+      "project_id": "my-gce-project",
+      "client_email": "my-gce-project@developer.gserviceaccount.com",
+      "key_location": "/home/user/.my-gce-project-private-key.p12"
     }
 ```
 
@@ -51,9 +51,9 @@ This can be loaded in a recipe with:
 And to access the values:
 
 ```ruby
-    gce['google_project_id']
-    gce['google_client_email']
-    gce['google_key_location']
+    gce['project_id']
+    gce['client_email']
+    gce['key_location']
 ```
 
 ## Installation
