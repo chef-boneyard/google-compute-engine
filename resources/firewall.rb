@@ -14,6 +14,9 @@
 
 actions :create, :delete
 
+attribute :client_email,            :kind_of => String, :required => true
+attribute :key_location,            :kind_of => String, :required => true
+attribute :project_id,              :kind_of => String, :required => true
 attribute :name,                    :kind_of => String
 attribute :network,                 :kind_of => String
 attribute :allowed_protocol,        :kind_of => String, :default => "TCP", :equal_to => ["TCP", "UDP"]

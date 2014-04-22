@@ -14,8 +14,3 @@
 
 default['gce']['api_version'] = "v1"
 default['gce']['fog_version'] = "1.20.0"
-
-# TODO(paulrossman): remove
-default['gce']['google_client_email'] = ""
-default['gce']['google_key_location'] = ""
-default['gce']['google_project_id'] = ""

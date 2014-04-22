@@ -26,9 +26,9 @@ module Google
 
       options = {
         :provider => 'google',
-        :google_project => node['gce']['google_project_id'],
-        :google_client_email => node['gce']['google_client_email'],
-        :google_key_location => node['gce']['google_key_location'],
+        :google_project => new_resource.project_id,
+        :google_client_email => new_resource.client_email,
+        :google_key_location => new_resource.key_location,
         :app_name => "#{run_context.cookbook_collection[cookbook_name].metadata.name}-cookbook",
         :app_version => run_context.cookbook_collection[cookbook_name].metadata.version
       }
