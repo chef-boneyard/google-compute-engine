@@ -17,24 +17,24 @@ actions :create, :delete,
         :add_healthcheck, :remove_healthcheck
 
 # set 'wait_for true' to block on request                                       
-attribute :wait_for,              :kind_of => [TrueClass, FalseClass], :default => false
+attribute :wait_for,                :kind_of => [TrueClass, FalseClass], :default => false
 
 # Google Compute Engine Credentials
-attribute :client_email,          :kind_of => String, :required => true
-attribute :key_location,          :kind_of => String, :required => true
-attribute :project_id,            :kind_of => String, :required => true
+attribute :client_email,            :kind_of => String, :required => true
+attribute :key_location,            :kind_of => String, :required => true
+attribute :project_id,              :kind_of => String, :required => true
 
-attribute :name,                  :kind_of => String
-attribute :description,           :kind_of => String
-attribute :region,                :kind_of => String
-attribute :health_checks,         :kind_of => Array
-attribute :instances,             :kind_of => Array
-attribute :session_affinity,      :kind_of => String
-attribute :failover_ratio,        :kind_of => Float
-attribute :backup_pool,           :kind_of => String
+attribute :name,                    :kind_of => String
+attribute :description,             :kind_of => String
+attribute :region,                  :kind_of => String
+attribute :health_checks,           :kind_of => Array
+attribute :instances,               :kind_of => Array
+attribute :session_affinity,        :kind_of => String
+attribute :failover_ratio,          :kind_of => Float
+attribute :backup_pool,             :kind_of => String
 # Use these attribute for :add/remove resources
-attribute :instance_name,         :kind_of => String
-attribute :healthcheck_name,      :kind_of => String
+attribute :instance_name,           :kind_of => String
+attribute :healthcheck_name,        :kind_of => String
 
 def initialize(*args)
   super

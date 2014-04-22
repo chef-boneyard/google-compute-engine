@@ -15,17 +15,17 @@
 actions :create, :delete
 
 # Google Compute Engine Credentials
-attribute :client_email,          :kind_of => String, :required => true
-attribute :key_location,          :kind_of => String, :required => true
-attribute :project_id,            :kind_of => String, :required => true
+attribute :client_email,            :kind_of => String, :required => true
+attribute :key_location,            :kind_of => String, :required => true
+attribute :project_id,              :kind_of => String, :required => true
 
-attribute :name,                  :kind_of => String
-attribute :network,               :kind_of => String
-attribute :allowed_protocol,      :kind_of => String, :default => "TCP", :equal_to => ["TCP", "UDP"]
-attribute :allowed_ports,         :kind_of => Array, :default => Array.new
-attribute :source_range,          :kind_of => Array, :default => ["0.0.0.0/0"]
-attribute :source_tags,           :kind_of => Array, :default => Array.new
-attribute :timeout,               :kind_of => Integer, :default => 60
+attribute :name,                    :kind_of => String
+attribute :network,                 :kind_of => String
+attribute :allowed_protocol,        :kind_of => String, :default => "TCP", :equal_to => ["TCP", "UDP"]
+attribute :allowed_ports,           :kind_of => Array, :default => Array.new
+attribute :source_range,            :kind_of => Array, :default => ["0.0.0.0/0"]
+attribute :source_tags,             :kind_of => Array, :default => Array.new
+attribute :timeout,                 :kind_of => Integer, :default => 60
 
 def initialize(*args)
   super
