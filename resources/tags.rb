@@ -14,9 +14,14 @@
 
 actions :set, :delete
 
-attribute :name,                  :kind_of => String
-attribute :zone_name,             :kind_of => String
-attribute :tags,                  :kind_of => Array, :default => Array.new
+# Google Compute Engine Credentials
+attribute :client_email,            :kind_of => String, :required => true
+attribute :key_location,            :kind_of => String, :required => true
+attribute :project_id,              :kind_of => String, :required => true
+
+attribute :name,                    :kind_of => String
+attribute :zone_name,               :kind_of => String
+attribute :tags,                    :kind_of => Array, :default => Array.new
 
 def initialize(*args)
   super

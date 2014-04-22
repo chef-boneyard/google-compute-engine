@@ -18,6 +18,11 @@ actions :create, :delete #, :attach, :detach
 # set 'wait_for true' to block on request
 attribute :wait_for,              :kind_of => [TrueClass, FalseClass], :default => false
 
+# Google Compute Engine Credentials
+attribute :client_email,          :kind_of => String, :required => true
+attribute :key_location,          :kind_of => String, :required => true
+attribute :project_id,            :kind_of => String, :required => true
+
 attribute :name,                  :kind_of => String
 attribute :device_name,           :kind_of => String
 attribute :zone_name,             :kind_of => String
@@ -29,7 +34,7 @@ attribute :boot,                  :kind_of => [ TrueClass, FalseClass ]
 attribute :type,                  :kind_of => String, :default => "PERSISTENT"
 attribute :mode,                  :kind_of => String, :default => "READ_WRITE", :equal_to => ["READ_WRITE", "READ_ONLY"]
 # TODO(erjohnso): use for attach/detach
-#attribute :instance_name,         :kind_of => String
+#attribute :instance_name,        :kind_of => String
 
 def initialize(*args)
   super

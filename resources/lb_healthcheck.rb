@@ -17,6 +17,11 @@ actions :create, :delete
 # set 'wait_for true' to block on request                                       
 attribute :wait_for,              :kind_of => [TrueClass, FalseClass], :default => false
 
+# Google Compute Engine Credentials
+attribute :client_email,          :kind_of => String, :required => true
+attribute :key_location,          :kind_of => String, :required => true
+attribute :project_id,            :kind_of => String, :required => true
+
 attribute :name,                  :kind_of => String
 attribute :description,           :kind_of => String
 attribute :host,                  :kind_of => String

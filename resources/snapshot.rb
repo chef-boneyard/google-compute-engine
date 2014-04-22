@@ -14,6 +14,11 @@
 
 actions :create, :delete
 
+# Google Compute Engine Credentials
+attribute :client_email,          :kind_of => String, :required => true
+attribute :key_location,          :kind_of => String, :required => true
+attribute :project_id,            :kind_of => String, :required => true
+
 attribute :name,                  :kind_of => String
 attribute :disk_name,             :kind_of => String
 attribute :zone_name,             :kind_of => String
