@@ -50,15 +50,59 @@ action :delete do
   # TODO unregister from chef node if attached
 end
 
-#action :attach do
-#  begin
-#  rescue Fog::Errors::NotFound
-#  end
-#end
+action :attach do
+  begin
+    Chef::Log.debug("Attempting to attach disk #{new_resource.name}")
+    # instance and zone are names only, not selfLinks
+    # source needs to be a selfLink, return first match as a hash
+    source = gce.disks.detect {|d| d.name == new_resource.source}
+    if source.nil?
+      raise "Source disk #{new_resource.source} not found"
+    end  
+    opts = {}
+    opts[:writable] = new_resource.writable if new_resource.writable
+    opts[:deviceName] = new_resource.name unless new_resource.deviceName
+    opts[:boot] = new_resource.boot if new_resource.boot
+    opts[:autoDelete] = new_resource.autoDelete if new_resource.autoDelete
+    gce.attach_disk(
+      new_resource.instance,
+      new_resource.zone,
+      source.self_link,
+      opts)
+    end
+    Timeout::timeout(new_resource.timeout) do
+      while true
+        if disk_ready?(gce, new_resource.instance, opts[:deviceName])
+          Chef::Log.info("Completed disk #{new_resource.name} attach")
+          break
+        else
+          Chef::Log.info("Waiting for disk #{new_resource.name} to be attached")
+          sleep 1
+        end  
+      end
+    end
+  rescue Timeout::Error
+    raise "Timed out waiting for disk attach after #{new_resource.timeout} seconds"
+  end
+end
 
-#action :detach do
-#  begin
-#  rescue Fog::Errors::NotFound
-#  end
-#end
+action :detach do
+  # not done
+  Chef::Log.debug("Attempting to detach disk #{new_resource.name}")
+  gce.detach(
+    new_resource.instance,
+    new_resource.zone,
+    new_resource.name)
+end
 
+private
+
+def disk_ready?(connection, instance, disk)
+  server = gce.servers.detect {|s| s.name == instance}
+  disk = server.disks.detect {|d| d['deviceName'] == disk}
+  if disk == nil
+    return false
+  else
+    return true
+  end
+end
