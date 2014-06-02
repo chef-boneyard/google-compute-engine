@@ -61,9 +61,9 @@ action :attach do
     end  
     opts = {}
     opts[:writable] = new_resource.writable if new_resource.writable
-    opts[:deviceName] = new_resource.name unless new_resource.deviceName
+    opts[:deviceName] = new_resource.name unless new_resource.device_name
     opts[:boot] = new_resource.boot if new_resource.boot
-    opts[:autoDelete] = new_resource.autoDelete if new_resource.autoDelete
+    opts[:autoDelete] = new_resource.auto_delete if new_resource.auto_delete
     gce.attach_disk(
       new_resource.instance,
       new_resource.zone,
@@ -72,7 +72,7 @@ action :attach do
     end
     Timeout::timeout(new_resource.timeout) do
       while true
-        if disk_ready?(gce, new_resource.instance, opts[:deviceName])
+        if disk_ready?(gce, new_resource.instance, opts[:device_name])
           Chef::Log.info("Completed disk #{new_resource.name} attach")
           break
         else
@@ -102,7 +102,7 @@ private
 
 def disk_ready?(connection, instance, disk)
   server = gce.servers.detect {|s| s.name == instance}
-  disk = server.disks.detect {|d| d['deviceName'] == disk}
+  disk = server.disks.detect {|d| d['device_name'] == disk}
   if disk == nil
     return false
   else
