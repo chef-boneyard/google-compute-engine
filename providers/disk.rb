@@ -87,12 +87,15 @@ action :attach do
 end
 
 action :detach do
-  # not done
   Chef::Log.debug("Attempting to detach disk #{new_resource.name}")
-  gce.detach(
+  unless disk_ready?(gce, new_resource.instance, new_resource.name) 
+    raise "#{new_resource.name} not attached to #{new_resource.instance}"
+  end
+  gce.detach_disk(
     new_resource.instance,
     new_resource.zone,
     new_resource.name)
+  Chef::Log.info("Completed disk #{new_resource.name} detach")
 end
 
 private
