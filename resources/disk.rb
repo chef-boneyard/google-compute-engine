@@ -26,14 +26,12 @@ attribute :name,                  :kind_of => String
 attribute :device_name,           :kind_of => String
 attribute :zone_name,             :kind_of => String
 attribute :description,           :kind_of => String
-attribute :size_gb,               :kind_of => Integer
+attribute :size_gb,               :kind_of => Integer, :default => 10
 attribute :source_snapshot,       :kind_of => String
 attribute :source_image,          :kind_of => String
 attribute :boot,                  :kind_of => [ TrueClass, FalseClass ]
 attribute :type,                  :kind_of => String, :default => "PERSISTENT"
 attribute :instance_name,         :kind_of => String
-
-attribute :source,                :kind_of => String
 attribute :writable,              :kind_of => [ TrueClass, FalseClass ], :default => true
 attribute :auto_delete,           :kind_of => [ TrueClass, FalseClass ], :default => true
 

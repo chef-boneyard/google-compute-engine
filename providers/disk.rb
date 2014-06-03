@@ -20,7 +20,7 @@ action :create do
     :zone_name => new_resource.zone_name
   }
   opts[:device_name] = new_resource.device_name || new_resource.name
-  opts[:size_gb] = new_resource.size_gb || 10
+  opts[:size_gb] = new_resource.size_gb
   if new_resource.source_snapshot
     opts[:source_snapshot] = new_resource.source_snapshot
     opts[:description] = new_resource.description || "Created with snapshot: #{new_resource.source_snapshot}"
@@ -55,15 +55,15 @@ action :attach do
     Chef::Log.debug("Attempting to attach disk #{new_resource.name}")
     # instance and zone are names only, not selfLinks
     # source needs to be a selfLink, return first match as a hash
-    source = gce.disks.detect {|d| d.name == new_resource.source}
+    source = gce.disks.detect {|d| d.name == new_resource.name}
     if source.nil?
       raise "Source disk #{new_resource.source} not found"
     end  
     opts = {}
-    opts[:writable] = new_resource.writable if new_resource.writable
+    opts[:writable] = new_resource.writable
     opts[:deviceName] = new_resource.name unless new_resource.device_name
     opts[:boot] = new_resource.boot if new_resource.boot
-    opts[:autoDelete] = new_resource.auto_delete if new_resource.auto_delete
+    opts[:autoDelete] = new_resource.auto_delete
     gce.attach_disk(
       new_resource.instance,
       new_resource.zone,
