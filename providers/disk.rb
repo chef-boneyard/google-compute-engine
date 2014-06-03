@@ -61,7 +61,7 @@ action :attach do
     end  
     opts = {}
     opts[:writable] = new_resource.writable
-    opts[:deviceName] = new_resource.name unless new_resource.device_name
+    opts[:deviceName] = new_resource.device_name || new_resource.name
     opts[:boot] = new_resource.boot if new_resource.boot
     opts[:autoDelete] = new_resource.auto_delete
     gce.attach_disk(
