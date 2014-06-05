@@ -14,28 +14,36 @@
 
 include Google::Gce
 
-action :create do
-  opts = {
-    :name => new_resource.name,
-    :zone_name => new_resource.zone_name
-  }
-  opts[:size_gb] = new_resource.size_gb
-  if new_resource.source_snapshot && new_resource.source_image
-    Chef::Log.debug("Both source_snapshot and source_image defined")
-    raise
-  end
-  if new_resource.source_snapshot
-    opts[:source_snapshot] = new_resource.source_snapshot
-    opts[:description] = new_resource.description || "Created from snapshot: #{new_resource.source_snapshot}"
-  end
-  if new_resource.source_image
-    opts[:source_image] = new_resource.source_image
-    opts[:description] = new_resource.description || "Created from image: #{new_resource.source_image}"
-  end
+# Support whyrun
+def whyrun_supported?
+  true
+end
 
-  disk = gce.disks.create(opts)
-  if new_resource.wait_for
-    disk.wait_for { disk.ready? }
+action :create do
+  begin
+    if new_resource.source_snapshot && new_resource.source_image
+      raise "Can not define both source_snapshot and source_image"
+    end
+    opts = {
+      :name => new_resource.name,
+      :zone_name => new_resource.zone_name,
+      :size_gb => new_resource.size_gb
+    }
+    if new_resource.source_snapshot
+      opts[:source_snapshot] = new_resource.source_snapshot
+      opts[:description] = new_resource.description || "Created from snapshot: #{new_resource.source_snapshot}"
+    end
+    if new_resource.source_image
+      opts[:source_image] = new_resource.source_image
+      opts[:description] = new_resource.description || "Created from image: #{new_resource.source_image}"
+    end
+    converge_by("create disk #{new_resource.name}") do
+      disk = gce.disks.create(opts)
+      disk.wait_for { disk.ready? } if new_resource.wait_for
+    end
+  rescue => e
+    Chef::Log.debug(e.message)
+    raise "#{e.message}"
   end
 end
 
