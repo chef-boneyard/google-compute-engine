@@ -52,7 +52,7 @@ action :delete do
   begin
     disk = gce.disks.get(new_resource.name)
     disk.destroy
-  rescue Fog::Errors::NotFound
+  rescue
     Chef::Log.debug("Disk #{new_resource.name} not found, nothing to delete")
   end
   # TODO unregister from chef node if attached
