@@ -25,5 +25,5 @@ attribute :tags,                    :kind_of => Array, :default => Array.new
 
 def initialize(*args)
   super
-  @action = :create
+  @action = :set
 end

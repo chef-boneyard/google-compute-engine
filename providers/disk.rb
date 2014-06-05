@@ -19,19 +19,19 @@ action :create do
     :name => new_resource.name,
     :zone_name => new_resource.zone_name
   }
-  opts[:device_name] = new_resource.device_name || new_resource.name
   opts[:size_gb] = new_resource.size_gb
+  if new_resource.source_snapshot && new_resource.source_image
+    Chef::Log.debug("Both source_snapshot and source_image defined")
+    raise
+  end
   if new_resource.source_snapshot
     opts[:source_snapshot] = new_resource.source_snapshot
-    opts[:description] = new_resource.description || "Created with snapshot: #{new_resource.source_snapshot}"
+    opts[:description] = new_resource.description || "Created from snapshot: #{new_resource.source_snapshot}"
   end
   if new_resource.source_image
     opts[:source_image] = new_resource.source_image
-    opts[:description] = new_resource.description || "Created with image: #{new_resource.source_image}"
+    opts[:description] = new_resource.description || "Created from image: #{new_resource.source_image}"
   end
-  opts[:boot] = new_resource.boot if new_resource.boot
-  opts[:mode] = new_resource.mode if new_resource.mode
-  opts[:type] = new_resource.type if new_resource.type
 
   disk = gce.disks.create(opts)
   if new_resource.wait_for
@@ -56,23 +56,20 @@ action :attach do
     # instance and zone are names only, not selfLinks
     # source needs to be a selfLink, return first match as a hash
     source = gce.disks.detect {|d| d.name == new_resource.name}
-    if source.nil?
-      raise "Source disk #{new_resource.source} not found"
-    end  
+    raise "Source disk #{new_resource.name} not found" if source.nil?
     opts = {}
     opts[:writable] = new_resource.writable
     opts[:deviceName] = new_resource.device_name || new_resource.name
     opts[:boot] = new_resource.boot if new_resource.boot
     opts[:autoDelete] = new_resource.auto_delete
     gce.attach_disk(
-      new_resource.instance,
-      new_resource.zone,
+      new_resource.instance_name,
+      new_resource.zone_name,
       source.self_link,
       opts)
-    end
     Timeout::timeout(new_resource.timeout) do
       while true
-        if disk_ready?(gce, new_resource.instance, opts[:device_name])
+        if disk_ready?(gce, new_resource.instance_name, opts[:device_name])
           Chef::Log.info("Completed disk #{new_resource.name} attach")
           break
         else
@@ -88,11 +85,11 @@ end
 
 action :detach do
   Chef::Log.debug("Attempting to detach disk #{new_resource.name}")
-  unless disk_ready?(gce, new_resource.instance, new_resource.name) 
-    raise "#{new_resource.name} not attached to #{new_resource.instance}"
+  unless disk_ready?(gce, new_resource.instance_name, new_resource.name) 
+    raise "#{new_resource.name} not attached to #{new_resource.instance_name}"
   end
   gce.detach_disk(
-    new_resource.instance,
+    new_resource.instance_name,
     new_resource.zone,
     new_resource.name)
   Chef::Log.info("Completed disk #{new_resource.name} detach")

@@ -22,15 +22,15 @@ attribute :client_email,          :kind_of => String, :required => true
 attribute :key_location,          :kind_of => String, :required => true
 attribute :project_id,            :kind_of => String, :required => true
 
-attribute :name,                  :kind_of => String
-attribute :device_name,           :kind_of => String
+attribute :name,                  :kind_of => String, :name_attribute => true
+#attribute :device_name,          :kind_of => String
 attribute :zone_name,             :kind_of => String
 attribute :description,           :kind_of => String
 attribute :size_gb,               :kind_of => Integer, :default => 10
 attribute :source_snapshot,       :kind_of => String
 attribute :source_image,          :kind_of => String
-attribute :boot,                  :kind_of => [ TrueClass, FalseClass ]
-attribute :type,                  :kind_of => String, :default => "PERSISTENT"
+attribute :boot,                  :kind_of => [ TrueClass, FalseClass ], :default => false
+#attribute :type,                 :kind_of => String, :default => "PERSISTENT"
 attribute :instance_name,         :kind_of => String
 attribute :writable,              :kind_of => [ TrueClass, FalseClass ], :default => true
 attribute :auto_delete,           :kind_of => [ TrueClass, FalseClass ], :default => true
