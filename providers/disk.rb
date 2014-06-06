@@ -20,6 +20,7 @@ def whyrun_supported?
 end
 
 action :create do
+  Chef::Log.debug("Attempting to create disk #{new_resource.name}")
   begin
     if new_resource.source_snapshot && new_resource.source_image
       raise "Can not define both source_snapshot and source_image"
@@ -45,17 +46,22 @@ action :create do
     Chef::Log.debug(e.message)
     raise "#{e.message}"
   end
+  Chef::Log.debug("Completed creating disk #{new_resource.name}")
 end
 
 action :delete do
-  # if disk is not found, that should be OK since user wants it gone anyway
-  begin
-    disk = gce.disks.get(new_resource.name)
-    disk.destroy
-  rescue
-    Chef::Log.debug("Disk #{new_resource.name} not found, nothing to delete")
+  Chef::Log.debug("Attempting to delete disk #{new_resource.name}")
+  converge_by("delete disk #{new_resource.name}") do
+    # if disk is not found, that should be OK since user wants it gone anyway
+    begin
+      disk = gce.disks.get(new_resource.name)
+      disk.destroy
+    rescue
+      Chef::Log.debug("Disk #{new_resource.name} not found, nothing to delete")
+    end
+    # TODO unregister from chef node if attached
   end
-  # TODO unregister from chef node if attached
+  Chef::Log.debug("Completed deleting disk #{new_resource.name}")
 end
 
 action :attach do
@@ -70,20 +76,22 @@ action :attach do
     opts[:deviceName] = new_resource.device_name || new_resource.name
     opts[:boot] = new_resource.boot if new_resource.boot
     opts[:autoDelete] = new_resource.auto_delete
-    gce.attach_disk(
-      new_resource.instance_name,
-      new_resource.zone_name,
-      source.self_link,
-      opts)
-    Timeout::timeout(new_resource.timeout) do
-      while true
-        if disk_ready?(gce, new_resource.instance_name, opts[:device_name])
-          Chef::Log.info("Completed disk #{new_resource.name} attach")
-          break
-        else
-          Chef::Log.info("Waiting for disk #{new_resource.name} to be attached")
-          sleep 1
-        end  
+    converge_by("attach disk #{new_resource.name}") do
+      gce.attach_disk(
+        new_resource.instance_name,
+        new_resource.zone_name,
+        source.self_link,
+        opts)
+      Timeout::timeout(new_resource.timeout) do
+        while true
+          if disk_ready?(gce, new_resource.instance_name, opts[:device_name])
+            Chef::Log.debug("Completed attaching disk #{new_resource.name}")
+            break
+          else
+            Chef::Log.debug("Waiting for disk #{new_resource.name} to be attached")
+            sleep 1
+          end  
+        end
       end
     end
   rescue Timeout::Error
@@ -96,11 +104,13 @@ action :detach do
   unless disk_ready?(gce, new_resource.instance_name, new_resource.name) 
     raise "#{new_resource.name} not attached to #{new_resource.instance_name}"
   end
-  gce.detach_disk(
-    new_resource.instance_name,
-    new_resource.zone,
-    new_resource.name)
-  Chef::Log.info("Completed disk #{new_resource.name} detach")
+  converge_by("detach disk #{new_resource.name}") do
+    gce.detach_disk(
+      new_resource.instance_name,
+      new_resource.zone,
+      new_resource.name)
+  end
+  Chef::Log.debug("Completed detaching disk #{new_resource.name}")
 end
 
 private
