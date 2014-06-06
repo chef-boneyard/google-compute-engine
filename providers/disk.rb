@@ -44,24 +44,36 @@ action :create do
     end
   rescue => e
     Chef::Log.debug(e.message)
-    raise "#{e.message}"
+    raise if e.message.scan(/already exists$/).join && new_resource.ignore_exists == false
   end
   Chef::Log.debug("Completed creating disk #{new_resource.name}")
 end
 
 action :delete do
+  # if disk is not found, that should be OK since user wants it gone anyway
   Chef::Log.debug("Attempting to delete disk #{new_resource.name}")
   converge_by("delete disk #{new_resource.name}") do
-    # if disk is not found, that should be OK since user wants it gone anyway
     begin
       disk = gce.disks.get(new_resource.name)
       disk.destroy
     rescue
       Chef::Log.debug("Disk #{new_resource.name} not found, nothing to delete")
     end
+    # deleting a disk can take some seconds, if this operation is quickly
+    # followed by a disk create then that operation will fail
+    Timeout::timeout(new_resource.timeout) do
+      while true
+        if disk_ready?(gce, new_resource.name)
+          Chef::Log.debug("Waiting for disk #{new_resource.name} to be deleted")
+          sleep 1
+        else
+          Chef::Log.debug("Completed deleting disk #{new_resource.name}")
+          break
+        end
+      end
+    end
     # TODO unregister from chef node if attached
   end
-  Chef::Log.debug("Completed deleting disk #{new_resource.name}")
 end
 
 action :attach do
@@ -84,7 +96,7 @@ action :attach do
         opts)
       Timeout::timeout(new_resource.timeout) do
         while true
-          if disk_ready?(gce, new_resource.instance_name, opts[:device_name])
+          if disk_attached?(gce, new_resource.instance_name, opts[:deviceName])
             Chef::Log.debug("Completed attaching disk #{new_resource.name}")
             break
           else
@@ -100,24 +112,38 @@ action :attach do
 end
 
 action :detach do
+  # if disk is not attached, that should be OK since user wants it detached anyway
   Chef::Log.debug("Attempting to detach disk #{new_resource.name}")
-  unless disk_ready?(gce, new_resource.instance_name, new_resource.name) 
-    raise "#{new_resource.name} not attached to #{new_resource.instance_name}"
-  end
-  converge_by("detach disk #{new_resource.name}") do
-    gce.detach_disk(
-      new_resource.instance_name,
-      new_resource.zone,
-      new_resource.name)
+  begin
+    #unless disk_ready?(gce, new_resource.instance_name, new_resource.name) 
+    #  raise "#{new_resource.name} not attached to #{new_resource.instance_name}"
+    #end
+    converge_by("detach disk #{new_resource.name}") do
+      gce.detach_disk(
+        new_resource.instance_name,
+        new_resource.zone_name,
+        new_resource.name)
+    end
+  rescue => e
+    Chef::Log.debug(e.message)
   end
   Chef::Log.debug("Completed detaching disk #{new_resource.name}")
 end
 
 private
 
-def disk_ready?(connection, instance, disk)
+def disk_attached?(connection, instance, device)
   server = gce.servers.detect {|s| s.name == instance}
-  disk = server.disks.detect {|d| d['device_name'] == disk}
+  disk = server.disks.detect {|d| d['device_name'] == device}
+  if disk == nil
+    return false
+  else
+    return true
+  end
+end
+
+def disk_ready?(connection, name)
+  disk = gce.disks.detect {|d| d.name == name}
   if disk == nil
     return false
   else
