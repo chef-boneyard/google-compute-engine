@@ -59,18 +59,25 @@ action :delete do
     rescue
       Chef::Log.debug("Disk #{new_resource.name} not found, nothing to delete")
     end
-    # deleting a disk can take some seconds, if this operation is quickly
-    # followed by a disk create then that operation will fail
-    Timeout::timeout(new_resource.timeout) do
-      while true
-        if disk_ready?(gce, new_resource.name)
-          Chef::Log.debug("Waiting for disk #{new_resource.name} to be deleted")
-          sleep 1
-        else
-          Chef::Log.debug("Completed deleting disk #{new_resource.name}")
-          break
+    if new_resource.wait_for
+      # deleting a disk can take some seconds, if this operation is quickly
+      # followed by a disk create then that operation will fail
+      tries = 0
+      Timeout::timeout(new_resource.timeout) do
+        while true
+          if disk_ready?(gce, new_resource.name)
+            tries += 1
+            Chef::Log.debug("Waiting #{(2**tries)} seconds to re-attempt disk #{new_resource.name} delete")
+            sleep (2**tries)
+            disk.destroy
+          else
+            Chef::Log.debug("Completed deleting disk #{new_resource.name}")
+            break
+          end
         end
       end
+    else
+      Chef::Log.debug("Not waiting to delete disk #{new_resource.name}")
     end
     # TODO unregister from chef node if attached
   end
@@ -94,38 +101,55 @@ action :attach do
         new_resource.zone_name,
         source.self_link,
         opts)
-      Timeout::timeout(new_resource.timeout) do
-        while true
-          if disk_attached?(gce, new_resource.instance_name, opts[:deviceName])
-            Chef::Log.debug("Completed attaching disk #{new_resource.name}")
-            break
-          else
-            Chef::Log.debug("Waiting for disk #{new_resource.name} to be attached")
-            sleep 1
-          end  
+      if new_resource.wait_for
+        Timeout::timeout(new_resource.timeout) do
+          while true
+            if disk_attached?(gce, new_resource.instance_name, opts[:deviceName])
+              Chef::Log.debug("#{new_resource.name} attached to #{new_resource.instance_name}")
+              break
+            else
+              Chef::Log.debug("Waiting 2 seconds for disk #{new_resource.name} to be attached")
+              sleep 2
+            end  
+          end
         end
+      else
+        Chef::Log.debug("Not waiting to attach disk #{new_resource.name}")
       end
     end
   rescue Timeout::Error
     raise "Timed out waiting for disk attach after #{new_resource.timeout} seconds"
   end
+  Chef::Log.debug("Completed attaching disk #{new_resource.name}")
 end
 
 action :detach do
   # if disk is not attached, that should be OK since user wants it detached anyway
   Chef::Log.debug("Attempting to detach disk #{new_resource.name}")
-  begin
-    #unless disk_ready?(gce, new_resource.instance_name, new_resource.name) 
-    #  raise "#{new_resource.name} not attached to #{new_resource.instance_name}"
-    #end
-    converge_by("detach disk #{new_resource.name}") do
+  converge_by("detach disk #{new_resource.name}") do
+    begin
       gce.detach_disk(
         new_resource.instance_name,
         new_resource.zone_name,
         new_resource.name)
+    rescue => e
+      Chef::Log.debug(e.message)
     end
-  rescue => e
-    Chef::Log.debug(e.message)
+    if new_resource.wait_for
+      Timeout::timeout(new_resource.timeout) do
+        while true
+          if disk_attached?(gce, new_resource.instance_name, new_resource.name)
+            Chef::Log.debug("Waiting 2 seconds for disk #{new_resource.name} to be detached")
+            sleep 2
+          else
+            Chef::Log.debug("#{new_resource.name} not attached to #{new_resource.instance_name}")
+            break
+          end 
+        end
+      end
+    else
+      Chef::Log.debug("Not waiting to detach disk #{new_resource.name}")
+    end
   end
   Chef::Log.debug("Completed detaching disk #{new_resource.name}")
 end
