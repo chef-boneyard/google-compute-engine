@@ -14,30 +14,42 @@
 
 include Google::Gce
 
-# TODO(paulrossman): fix
 action :create do
   begin
     Chef::Log.debug("Attempting to insert firewall #{new_resource.name}")
-    allowed = create_allowed(new_resource.allowed_protocol, new_resource.allowed_ports)
-    gce.insert_firewall(
-      new_resource.name,
-      new_resource.source_range,
-      allowed,
-      new_resource.network,
-      new_resource.source_tags) 
-    Timeout::timeout(new_resource.timeout) do
-      while true
-        if firewall_ready?(gce, new_resource.name)
-          Chef::Log.info("Completed firewall #{new_resource.name} insert")
-          break
+    opts = {
+      :name => new_resource.name
+    }
+    # allowed [{"tcp"=>"1"}, {"tcp"=>["2","3"]}, {"udp"=>"2-3"}, {"icmp"=>["2"]}]
+    # allowed = [{"IPProtocol"=>"tcp", "ports"=>["80", "443"]},
+    #            {"IPProtocol"=>"tcp", "ports"=>["1-65535"]},
+    #            {"IPProtocol"=>"udp", "ports"=>["1-65535"]},
+    #            {"IPProtocol"=>"icmp", "ports"=>["100"]}]
+    allowed = []
+    new_resource.allowed.each do |a|
+      a.each do |k,v|
+        if v.kind_of?(Array)
+          p = v.flatten
         else
-          Chef::Log.info("Waiting for firewall #{new_resource.name} to be inserted")
-          sleep 1
-        end  
+          p = ["#{v}"]
+        end
+        allowed << {"IPProtocol"=>"#{k}", "ports"=>p}
       end
     end
-  rescue Timeout::Error
-    raise "Timed out waiting for firewall insert after #{new_resource.timeout} seconds"
+    opts[:allowed] = allowed
+    opts[:description] = new_resource.description if new_resource.description
+    # network needs to be a self link
+    network = gce.networks.get(new_resource.network)
+    opts[:network] = network.self_link
+    # source_ranges = ["0.0.0.0/0"]
+    opts[:source_ranges] = new_resource.source_ranges
+    opts[:source_tags] = new_resource.source_tags if new_resource.source_tags
+    opts[:target_tags] = new_resource.target_tags if new_resource.target_tags
+    firewall = gce.firewalls.new(opts)
+    firewall.save
+  rescue => e
+    Chef::Log.info("Error creating #{new_resource.name} firewall")
+    Chef::Log.debug(e)
   end
 end
 
