@@ -14,6 +14,11 @@
 
 include Google::Gce
 
+# Support whyrun
+def whyrun_supported?
+  true
+end
+
 action :create do
   begin
     Chef::Log.debug("Attempting to create firewall #{new_resource.name}")
@@ -39,8 +44,10 @@ action :create do
     opts[:source_ranges] = new_resource.source_ranges
     opts[:source_tags] = new_resource.source_tags if new_resource.source_tags
     opts[:target_tags] = new_resource.target_tags if new_resource.target_tags
-    firewall = gce.firewalls.new(opts)
-    firewall.save
+    converge_by("create firewall #{new_resource.name}") do
+      firewall = gce.firewalls.new(opts)
+      firewall.save
+    end
     Chef::Log.debug("Completed creating firewall #{new_resource.name}")
   rescue => e
     Chef::Log.debug(e.message)
@@ -56,8 +63,10 @@ action :delete do
     if new_resource.wait_for
       Chef::Log.debug("Waiting for firewall #{new_resource.name} to be deleted")
     end
-    # async is !wait_for
-    firewall.destroy(async=!new_resource.wait_for)
+    converge_by("delete firewall #{new_resource.name}") do
+      # async is !wait_for
+      firewall.destroy(async=!new_resource.wait_for)
+    end
     Chef::Log.debug("Completed deleting firewall #{new_resource.name}")
   rescue
     Chef::Log.debug("Firewall #{new_resource.name} not found, nothing to delete")
