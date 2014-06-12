@@ -192,6 +192,33 @@ This will create a new instance.
     end
 ```
 
+### firewall
+
+This will create a new firewall.
+
+```ruby
+    gce_firewall "my-firewall" do
+      client_email gce['client_email']
+      key_location gce['key_location']
+      project_id gce['project_id']
+      description "my firewall"
+      allowed [{"tcp"=>"1000"}, {"tcp"=>["1001","1002"]}, {"udp"=>"1000-1002"}, {"udp"=>["1010-1012"]}]
+      source_tags ["foo", "bar"]
+      target_tags ["baz", "qux"]
+    end
+```
+
+This will delete a new firewall.
+
+```ruby
+    gce_firewall "my-firewall" do
+      client_email gce['client_email']
+      key_location gce['key_location']
+      project_id gce['project_id']
+      action :delete
+    end
+```
+
 License and Authors
 ===================
 
