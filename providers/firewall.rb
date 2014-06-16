@@ -14,17 +14,20 @@
 
 include Google::Gce
 
-# TODO(paulrossman): fix
 action :create do
   begin
     Chef::Log.debug("Attempting to insert firewall #{new_resource.name}")
     allowed = create_allowed(new_resource.allowed_protocol, new_resource.allowed_ports)
+    opts = {}
+    opts[:source_ranges] = new_resource.source_ranges if new_resource.source_ranges
+    opts[:source_tags] = new_resource.source_tags if new_resource.source_tags
+    opts[:target_tags] = new_resource.target_tags if new_resource.target_tags
+
     gce.insert_firewall(
       new_resource.name,
-      new_resource.source_range,
       allowed,
       new_resource.network,
-      new_resource.source_tags) 
+      opts)
     Timeout::timeout(new_resource.timeout) do
       while true
         if firewall_ready?(gce, new_resource.name)
