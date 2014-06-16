@@ -208,7 +208,7 @@ This will create a new firewall.
     end
 ```
 
-This will delete a new firewall.
+This will delete an existing firewall.
 
 ```ruby
     gce_firewall "my-firewall" do
