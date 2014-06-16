@@ -23,8 +23,9 @@ attribute :name,                    :kind_of => String
 attribute :network,                 :kind_of => String
 attribute :allowed_protocol,        :kind_of => String, :default => "TCP", :equal_to => ["TCP", "UDP"]
 attribute :allowed_ports,           :kind_of => Array, :default => Array.new
-attribute :source_range,            :kind_of => Array, :default => ["0.0.0.0/0"]
+attribute :source_ranges,           :kind_of => Array, :default => ["0.0.0.0/0"]
 attribute :source_tags,             :kind_of => Array, :default => Array.new
+attribute :target_tags,             :kind_of => Array, :default => Array.new
 attribute :timeout,                 :kind_of => Integer, :default => 60
 
 def initialize(*args)
