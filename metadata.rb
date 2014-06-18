@@ -14,9 +14,9 @@
 
 name              "gce"
 maintainer        "Google Inc."
-maintainer_email  ""
+maintainer_email  "paulrossman@google.com"
 license           "Apache 2.0"
 description       "LWRPs for managing GCE resources"
 long_description  IO.read(File.join(File.dirname(__FILE__), 'README.md'))
-version           "0.2.0"
+version           "0.3.0"
 recipe            "gce", "Installs the fog gem and other dependencies"

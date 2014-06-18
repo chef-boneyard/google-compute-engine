@@ -25,5 +25,5 @@ attribute :metadata,                :kind_of => Hash, :default => Hash.new
 
 def initialize(*args)
   super
-  @action = :create
+  @action = :set
 end

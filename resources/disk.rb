@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# TODO(erjohnso): use for attach/detach
-actions :create, :delete #, :attach, :detach
+actions :create, :delete, :attach, :detach
 
 # set 'wait_for true' to block on request
 attribute :wait_for,              :kind_of => [TrueClass, FalseClass], :default => false
@@ -23,18 +22,20 @@ attribute :client_email,          :kind_of => String, :required => true
 attribute :key_location,          :kind_of => String, :required => true
 attribute :project_id,            :kind_of => String, :required => true
 
-attribute :name,                  :kind_of => String
+attribute :name,                  :kind_of => String, :name_attribute => true
 attribute :device_name,           :kind_of => String
 attribute :zone_name,             :kind_of => String
 attribute :description,           :kind_of => String
-attribute :size_gb,               :kind_of => Integer
+attribute :size_gb,               :kind_of => Integer, :default => 10
 attribute :source_snapshot,       :kind_of => String
 attribute :source_image,          :kind_of => String
-attribute :boot,                  :kind_of => [ TrueClass, FalseClass ]
-attribute :type,                  :kind_of => String, :default => "PERSISTENT"
-attribute :mode,                  :kind_of => String, :default => "READ_WRITE", :equal_to => ["READ_WRITE", "READ_ONLY"]
-# TODO(erjohnso): use for attach/detach
-#attribute :instance_name,        :kind_of => String
+attribute :boot,                  :kind_of => [ TrueClass, FalseClass ], :default => false
+#attribute :type,                 :kind_of => String, :default => "PERSISTENT"
+attribute :instance_name,         :kind_of => String
+attribute :writable,              :kind_of => [ TrueClass, FalseClass ], :default => true
+attribute :auto_delete,           :kind_of => [ TrueClass, FalseClass ], :default => true
+attribute :timeout,               :kind_of => Integer, :default => 60
+attribute :ignore_exists,         :kind_of => [ TrueClass, FalseClass ], :default => true
 
 def initialize(*args)
   super
