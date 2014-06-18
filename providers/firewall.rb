@@ -14,65 +14,61 @@
 
 include Google::Gce
 
-# TODO(paulrossman): fix
+# Support whyrun
+def whyrun_supported?
+  true
+end
+
 action :create do
   begin
-    Chef::Log.debug("Attempting to insert firewall #{new_resource.name}")
-    allowed = create_allowed(new_resource.allowed_protocol, new_resource.allowed_ports)
-    gce.insert_firewall(
-      new_resource.name,
-      new_resource.source_range,
-      allowed,
-      new_resource.network,
-      new_resource.source_tags) 
-    Timeout::timeout(new_resource.timeout) do
-      while true
-        if firewall_ready?(gce, new_resource.name)
-          Chef::Log.info("Completed firewall #{new_resource.name} insert")
-          break
+    Chef::Log.debug("Attempting to create firewall #{new_resource.name}")
+    opts = {
+      :name => new_resource.name
+    }
+    allowed = []
+    new_resource.allowed.each do |a|
+      a.each do |k,v|
+        if v.kind_of?(Array)
+          p = v.flatten
         else
-          Chef::Log.info("Waiting for firewall #{new_resource.name} to be inserted")
-          sleep 1
-        end  
+          p = ["#{v}"]
+        end
+        allowed << {"IPProtocol"=>"#{k}", "ports"=>p}
       end
     end
-  rescue Timeout::Error
-    raise "Timed out waiting for firewall insert after #{new_resource.timeout} seconds"
+    opts[:allowed] = allowed
+    opts[:description] = new_resource.description if new_resource.description
+    # network needs to be a self link
+    network = gce.networks.get(new_resource.network)
+    opts[:network] = network.self_link
+    opts[:source_ranges] = new_resource.source_ranges
+    opts[:source_tags] = new_resource.source_tags if new_resource.source_tags
+    opts[:target_tags] = new_resource.target_tags if new_resource.target_tags
+    converge_by("create firewall #{new_resource.name}") do
+      firewall = gce.firewalls.new(opts)
+      firewall.save
+    end
+    Chef::Log.debug("Completed creating firewall #{new_resource.name}")
+  rescue => e
+    Chef::Log.debug(e.message)
+    raise if e.message.scan(/already exists$/).join && new_resource.ignore_exists == false
   end
 end
 
 action :delete do
+  Chef::Log.debug("Attempting to delete firewall #{new_resource.name}")
   begin
-    Chef::Log.debug("Attempting to delete firewall #{new_resource.name}")
-    begin
-      gce.delete_firewall(new_resource.name)
-    rescue Fog::Errors::NotFound
+    # returns nil if firewall does not exist
+    firewall = gce.firewalls.get(new_resource.name)
+    if new_resource.wait_for
+      Chef::Log.debug("Waiting for firewall #{new_resource.name} to be deleted")
     end
-    Timeout::timeout(new_resource.timeout) do
-      while true
-        if firewall_ready?(gce, new_resource.name)
-          Chef::Log.info("Waiting for firewall #{new_resource.name} to be deleted")
-          sleep 1
-        else
-          Chef::Log.info("Completed firewall #{new_resource.name} delete")
-          break
-        end  
-      end
+    converge_by("delete firewall #{new_resource.name}") do
+      # async is !wait_for
+      firewall.destroy(async=!new_resource.wait_for)
     end
-  rescue Timeout::Error
-    raise "Timed out waiting for firewall insert after #{new_resource.timeout} seconds"
+    Chef::Log.debug("Completed deleting firewall #{new_resource.name}")
+  rescue
+    Chef::Log.debug("Firewall #{new_resource.name} not found, nothing to delete")
   end
-end
-
-private
-
-def create_allowed(protocol, ports)
-  allowed = [{"IPProtocol" => protocol, "ports" => ports}]
-end
-
-def firewall_ready?(connection, name)
-  connection.get_firewall(name)
-  true
-rescue Fog::Errors::NotFound
-  false
 end
