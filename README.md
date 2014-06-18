@@ -3,7 +3,7 @@
 ## Description
 
 This cookbook provides libraries, resources and providers to configure
-and manage Google Compute Enginge components. The currently supported
+and manage Google Compute Engine components. The currently supported
 GCE resources are:
 
  * disks (`disk`)
@@ -120,8 +120,8 @@ Actions:
 
 * `create` - create a new disk.
 * `delete` - delete a disk.
-* `attach` - attach the specified disk. (NOT YET IMPLEMENTED)
-* `detach` - detach the specified volume. (NOT YET IMPLEMENTED)
+* `attach` - attach the specified disk.
+* `detach` - detach the specified disk.
 
 Attribute Parameters:
 
