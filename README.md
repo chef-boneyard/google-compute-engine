@@ -172,7 +172,6 @@ Attribute Parameters:
 ### tags.rb
 
 * `set` - set instance tags.
-* `delete` - delete instance tags.
 
 ## Usage
 
