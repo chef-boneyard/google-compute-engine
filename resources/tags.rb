@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-actions :set, :delete
+actions :set
 
 # Google Compute Engine Credentials
 attribute :client_email,            :kind_of => String, :required => true

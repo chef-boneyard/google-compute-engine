@@ -15,11 +15,8 @@
 include Google::Gce
 
 action :set do
-  gce.set_tags(new_resource.name, new_resource.zone_name, new_resource.tags)
+  server = gce.get_server(new_resource.name, new_resource.zone_name)
+  fingerprint = server.body['tags']['fingerprint']
+  gce.set_tags(new_resource.name, new_resource.zone_name, fingerprint, new_resource.tags)
   Chef::Log.info ("Applied tags to instance #{new_resource.name}")
-end
-
-action :delete do
-  gce.set_tags(new_resource.name, new_resource.zone_name)
-  Chef::Log.info ("Removed tags from instance #{new_resource.name}")
 end
