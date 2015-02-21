@@ -6,16 +6,16 @@ This cookbook provides libraries, resources and providers to configure
 and manage Google Compute Engine components. The currently supported
 GCE resources are:
 
- * disks (`disk`)
- * firewalls (`firewall`)
- * instances (`instance`)
- * lb forwarding rules (`lb_forwardingrule`)
- * lb health checks (`lb_healthcheck`)
- * lb target pools (`lb_targetpool`)
- * metadata (`metadata`)
- * networks (`network`)
- * snapshots (`snapshot`)
- * tags (`tags`)
+* disks (`disk`)
+* firewalls (`firewall`)
+* instances (`instance`)
+* lb forwarding rules (`lb_forwardingrule`)
+* lb health checks (`lb_healthcheck`)
+* lb target pools (`lb_targetpool`)
+* metadata (`metadata`)
+* networks (`network`)
+* snapshots (`snapshot`)
+* tags (`tags`)
 
 ## Requirements
 
@@ -33,27 +33,27 @@ select your project. Next select APIs & auth then Credentials. Create a new
 "Client ID" and specify "Service account". This will generate a new public/private key
 pair.
 
-```ruby
-    % knife data bag show gce service_account
-    {
-      "project_id": "my-gce-project",
-      "client_email": "my-gce-project@developer.gserviceaccount.com",
-      "key_location": "/home/user/.my-gce-project-private-key.p12"
-    }
+```sh
+% knife data bag show gce service_account
+{
+  "project_id": "my-gce-project",
+  "client_email": "my-gce-project@developer.gserviceaccount.com",
+  "key_location": "/home/user/.my-gce-project-private-key.p12"
+}
 ```
 
 This can be loaded in a recipe with:
 
 ```ruby
-    gce = data_bag_item("gce", "service_account")
+gce = data_bag_item("gce", "service_account")
 ```
 
 And to access the values:
 
 ```ruby
-    gce['project_id']
-    gce['client_email']
-    gce['key_location']
+gce['project_id']
+gce['client_email']
+gce['key_location']
 ```
 
 ## Installation
@@ -72,16 +72,16 @@ dependencies, in Ruby.
 
 To use the Opscode platform version:
 
-```
-    echo "cookbook 'gce'" >> Cheffile
-    librarian-chef install
+```sh
+echo "cookbook 'gce'" >> Cheffile
+librarian-chef install
 ```
 
 To use the Git version:
 
-```
-    echo "cookbook 'gce', :git => 'git@github.com:chef-partners/google-compute-engine.git'" >> Cheffile
-    librarian-chef install
+```sh
+echo "cookbook 'gce', :git => 'git@github.com:chef-partners/google-compute-engine.git'" >> Cheffile
+librarian-chef install
 ```
 
 ## Recipes
@@ -94,9 +94,9 @@ the `google-compute-engine` recipe is in the node or role `run_list` before any 
 from this cookbook are used.
 
 ```ruby
-    "run_list": [
-      "recipe[google-compute-engine]"
-    ]
+"run_list": [
+  "recipe[google-compute-engine]"
+]
 ```
 
 ## Libraries
@@ -105,7 +105,7 @@ The cookbook has a library module, `Google::Gce`, which can be
 included where necessary:
 
 ```ruby
-  include Google::Gce
+include Google::Gce
 ```
 
 ## Resources and Providers
@@ -180,15 +180,15 @@ Attribute Parameters:
 This will create a new instance.
 
 ```ruby
-    gce_instance "my-gce-instance" do
-      machine_type "n1-standard-1"
-      zone_name "us-central1-a"
-      boot_disk_image "debian-7-wheezy-v20140318"
-      service_account_scopes ["compute", "userinfo.email", "devstorage.full_control"]
-      auto_restart true
-      on_host_maintenance "MIGRATE"
-      action :create
-    end
+gce_instance "my-gce-instance" do
+  machine_type "n1-standard-1"
+  zone_name "us-central1-a"
+  boot_disk_image "debian-7-wheezy-v20140318"
+  service_account_scopes ["compute", "userinfo.email", "devstorage.full_control"]
+  auto_restart true
+  on_host_maintenance "MIGRATE"
+  action :create
+end
 ```
 
 ### firewall
@@ -196,26 +196,26 @@ This will create a new instance.
 This will create a new firewall.
 
 ```ruby
-    gce_firewall "my-firewall" do
-      client_email gce['client_email']
-      key_location gce['key_location']
-      project_id gce['project_id']
-      description "my firewall"
-      allowed [{"tcp"=>"1000"}, {"tcp"=>["1001","1002"]}, {"udp"=>"1000-1002"}, {"udp"=>["1010-1012"]}]
-      source_tags ["foo", "bar"]
-      target_tags ["baz", "qux"]
-    end
+gce_firewall "my-firewall" do
+  client_email gce['client_email']
+  key_location gce['key_location']
+  project_id gce['project_id']
+  description "my firewall"
+  allowed [{"tcp"=>"1000"}, {"tcp"=>["1001","1002"]}, {"udp"=>"1000-1002"}, {"udp"=>["1010-1012"]}]
+  source_tags ["foo", "bar"]
+  target_tags ["baz", "qux"]
+end
 ```
 
 This will delete an existing firewall.
 
 ```ruby
-    gce_firewall "my-firewall" do
-      client_email gce['client_email']
-      key_location gce['key_location']
-      project_id gce['project_id']
-      action :delete
-    end
+gce_firewall "my-firewall" do
+  client_email gce['client_email']
+  key_location gce['key_location']
+  project_id gce['project_id']
+  action :delete
+end
 ```
 
 License and Authors
