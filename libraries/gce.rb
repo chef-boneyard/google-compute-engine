@@ -28,11 +28,17 @@ module Google
         :provider => 'google',
         :google_project => new_resource.project_id,
         :google_client_email => new_resource.client_email,
-        :google_key_location => new_resource.key_location,
         :app_name => "#{run_context.cookbook_collection[cookbook_name].metadata.name}-cookbook",
         :app_version => run_context.cookbook_collection[cookbook_name].metadata.version
       }
-
+      
+      # allow use of json key string or key file
+      if new_resource.json_key
+        options.merge!(:google_json_key_string => new_resource.json_key) 
+      else
+        options.merge!(:google_key_location => new_resource.key_location) 
+      end
+      
       @@gce = Fog::Compute.new(options)
     end
 
