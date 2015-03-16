@@ -16,36 +16,50 @@ action :assign do
     Timeout::timeout(new_resource.timeout) do
       server = gce.servers.get(new_resource.server)
       address = gce.addresses.get(new_resource.name,new_resource.region)
- 
+      raise "Unable to find server #{new_resource.server}" if server.nil?
+      raise "Unable to find address #{new_resource.name}" if address.nil?
+      
       options={
         :name=>"External NAT", 
         :address=>address.address
       } #options for adding access config
   
+      if  server.network_interfaces[0].has_key?("accessConfigs") && 
+          server.network_interfaces[0]["accessConfigs"][0]["natIP"] == address.address
+        Chef::Log.info "Server #{server.name} already has Static IP #{address.address}"
+        exit 
+      end
+      
       if server.network_interfaces[0].has_key?("accessConfigs")
         Chef::Log.info "Deleting access_config for 'nic0'"
-        gce.delete_server_access_config(server.name,server.zone,'nic0')
+        access_config =  server.network_interfaces[0]["accessConfigs"][0]["name"]
+        delete_options={
+          access_config: access_config
+        }
+        gce.delete_server_access_config(server.name,server.zone,'nic0',delete_options)
 
       end
        
       while (server.network_interfaces[0].has_key?("accessConfigs"))
         Chef::Log.info 'Waiting for access_config to delete'
+        Chef::Log.debug "server.network_interfaces[0]: #{server.network_interfaces[0]}"
         sleep 20
-        server.reload
+        server = server.reload
       end
 
       gce.add_server_access_config(server.name,server.zone,'nic0',options)
-      sleep 30 # wait for service to update
+      Chef::Log.debug "Added server access_config"
+      sleep 30
       server = server.reload
-
-      while (server.network_interfaces[0].has_key?("accessConfigs") and 
-            server.network_interfaces[0]["accessConfigs"][0]["natIP"]!= address.address)
-        Chef::Log.info "Waiting for  IP '#{static_ip}' to be added"
-        sleep 20
-        server.reload
+      
+  
+      while !server.network_interfaces[0].has_key?("accessConfigs")
+        Chef::Log.info "Waiting for access_config to be added"
+        sleep 10
+        server = server.reload
       end
     end
   rescue Timeout::Error
-    raise "Timed out waiting to assign static IP after #{new_resource.timeout} seconds"
+    raise "Timeout waiting to assign static IP after #{new_resource.timeout} seconds"
   end
 end
