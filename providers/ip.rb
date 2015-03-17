@@ -27,36 +27,38 @@ action :assign do
       if  server.network_interfaces[0].has_key?("accessConfigs") && 
           server.network_interfaces[0]["accessConfigs"][0]["natIP"] == address.address
         Chef::Log.info "Server #{server.name} already has Static IP #{address.address}"
-        exit 
-      end
+        
+      else
+   
       
-      if server.network_interfaces[0].has_key?("accessConfigs")
-        Chef::Log.info "Deleting access_config for 'nic0'"
-        access_config =  server.network_interfaces[0]["accessConfigs"][0]["name"]
-        delete_options={
-          access_config: access_config
-        }
-        gce.delete_server_access_config(server.name,server.zone,'nic0',delete_options)
+        if server.network_interfaces[0].has_key?("accessConfigs")
+          Chef::Log.info "Deleting access_config for 'nic0'"
+          access_config =  server.network_interfaces[0]["accessConfigs"][0]["name"]
+          delete_options={
+            access_config: access_config
+          }
+          gce.delete_server_access_config(server.name,server.zone,'nic0',delete_options)
 
-      end
+        end
        
-      while (server.network_interfaces[0].has_key?("accessConfigs"))
-        Chef::Log.info 'Waiting for access_config to delete'
-        Chef::Log.debug "server.network_interfaces[0]: #{server.network_interfaces[0]}"
-        sleep 20
-        server = server.reload
-      end
+        while (server.network_interfaces[0].has_key?("accessConfigs"))
+          Chef::Log.info 'Waiting for access_config to delete'
+          Chef::Log.debug "server.network_interfaces[0]: #{server.network_interfaces[0]}"
+          sleep 20
+          server = server.reload
+        end
 
-      gce.add_server_access_config(server.name,server.zone,'nic0',options)
-      Chef::Log.debug "Added server access_config"
-      sleep 30
-      server = server.reload
+        gce.add_server_access_config(server.name,server.zone,'nic0',options)
+        Chef::Log.debug "Added server access_config"
+        sleep 30
+        server = server.reload
       
   
-      while !server.network_interfaces[0].has_key?("accessConfigs")
-        Chef::Log.info "Waiting for access_config to be added"
-        sleep 10
-        server = server.reload
+        while !server.network_interfaces[0].has_key?("accessConfigs")
+          Chef::Log.info "Waiting for access_config to be added"
+          sleep 10
+          server = server.reload
+        end
       end
     end
   rescue Timeout::Error
