@@ -35,7 +35,7 @@ attribute :on_host_maintenance,     :kind_of => String, :default => "MIGRATE", :
 # if user sets boot_disk_name, they intend to use existing disk as boot device
 attribute :boot_disk_name,          :kind_of => String
 # attributes needed if user wants to create a disk and instance in one shot
-attribute :boot_disk_image,         :kind_of => String, :default => "debian-7-wheezy-v20140318"
+attribute :boot_disk_image,         :kind_of => String, :default => "debian-8-jessie-v20150929"
 attribute :boot_disk_snapshot,      :kind_of => String
 attribute :boot_disk_size_gb,       :kind_of => Integer, :default => 10
 # unattended bootstrap attributes (required client.rb parameters)
