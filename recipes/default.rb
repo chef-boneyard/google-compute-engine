@@ -17,6 +17,10 @@ chef_gem "fog" do
   action :install
 end
 
+chef_gem "activesupport" do
+  version '~> 4.0.0'
+  action :install
+end
 chef_gem 'google-api-client'
 chef_gem 'uuidtools'
 chef_gem 'multi_json'

@@ -13,4 +13,4 @@
 # limitations under the License.
 
 default['gce']['api_version'] = "v1"
-default['gce']['fog_version'] = "1.22.1"
+default['gce']['fog_version'] = "1.28.0"
