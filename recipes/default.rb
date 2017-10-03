@@ -12,12 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-chef_gem "fog" do
+apt_package 'build-essential' do
+end.run_action(:install)
+
+apt_package 'patch' do
+end.run_action(:install)
+
+apt_package 'ruby-dev' do
+end.run_action(:install)
+
+apt_package 'zlib1g-dev' do
+end.run_action(:install)
+
+apt_package 'liblzma-dev' do
+end.run_action(:install)
+
+chef_gem 'fog' do
   version node['gce']['fog_version']
-  action :install
+  compile_time true
 end
 
-chef_gem 'google-api-client'
+chef_gem 'google-api-client' do
+  version node['gce']['google-api-client_version']
+  compile_time true
+end
+
+chef_gem 'fog-google' do
+  compile_time true
+end
+
 chef_gem 'uuidtools'
 chef_gem 'multi_json'
 

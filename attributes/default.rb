@@ -13,4 +13,5 @@
 # limitations under the License.
 
 default['gce']['api_version'] = "v1"
-default['gce']['fog_version'] = "1.22.1"
+default['gce']['fog_version'] = "1.35.0"
+default['gce']['google-api-client_version'] = "0.8.6"

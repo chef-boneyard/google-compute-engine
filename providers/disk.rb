@@ -21,30 +21,35 @@ end
 
 action :create do
   Chef::Log.debug("Attempting to create disk #{new_resource.name}")
-  begin
-    if new_resource.source_snapshot && new_resource.source_image
-      raise "Can not define both source_snapshot and source_image"
+  if disk_exists?(gce, new_resource.name)
+    begin
+      if new_resource.source_snapshot && new_resource.source_image
+        raise "Can not define both source_snapshot and source_image"
+      end
+      opts = {
+          :name => new_resource.name,
+          :zone_name => new_resource.zone_name,
+          :size_gb => new_resource.size_gb
+      }
+      if new_resource.source_snapshot
+        opts[:source_snapshot] = new_resource.source_snapshot
+        opts[:description] = new_resource.description || "Created from snapshot: #{new_resource.source_snapshot}"
+      end
+      if new_resource.source_image
+        opts[:source_image] = new_resource.source_image
+        opts[:description] = new_resource.description || "Created from image: #{new_resource.source_image}"
+      end
+      converge_by("create disk #{new_resource.name}") do
+        disk = gce.disks.create(opts)
+        disk.wait_for { disk.ready? } if new_resource.wait_for
+      end
+    rescue => e
+      Chef::Log.error(e.message)
     end
-    opts = {
-      :name => new_resource.name,
-      :zone_name => new_resource.zone_name,
-      :size_gb => new_resource.size_gb
-    }
-    if new_resource.source_snapshot
-      opts[:source_snapshot] = new_resource.source_snapshot
-      opts[:description] = new_resource.description || "Created from snapshot: #{new_resource.source_snapshot}"
+  else
+    unless new_resource.ignore_exists
+      raise "disk #{new_resource.name} already exists"
     end
-    if new_resource.source_image
-      opts[:source_image] = new_resource.source_image
-      opts[:description] = new_resource.description || "Created from image: #{new_resource.source_image}"
-    end
-    converge_by("create disk #{new_resource.name}") do
-      disk = gce.disks.create(opts)
-      disk.wait_for { disk.ready? } if new_resource.wait_for
-    end
-  rescue => e
-    Chef::Log.debug(e.message)
-    raise if e.message.scan(/already exists$/).join && new_resource.ignore_exists == false
   end
   Chef::Log.debug("Completed creating disk #{new_resource.name}")
 end
@@ -92,29 +97,32 @@ action :attach do
     raise "Source disk #{new_resource.name} not found" if source.nil?
     opts = {}
     opts[:writable] = new_resource.writable
-    opts[:deviceName] = new_resource.device_name || new_resource.name
+    deviceName = new_resource.device_name || new_resource.name
+    opts[:deviceName] = deviceName
     opts[:boot] = new_resource.boot if new_resource.boot
     opts[:autoDelete] = new_resource.auto_delete
-    converge_by("attach disk #{new_resource.name}") do
-      gce.attach_disk(
-        new_resource.instance_name,
-        new_resource.zone_name,
-        source.self_link,
-        opts)
-      if new_resource.wait_for
-        Timeout::timeout(new_resource.timeout) do
-          while true
-            if disk_attached?(gce, new_resource.instance_name, opts[:deviceName])
-              Chef::Log.debug("#{new_resource.name} attached to #{new_resource.instance_name}")
-              break
-            else
-              Chef::Log.debug("Waiting 2 seconds for disk #{new_resource.name} to be attached")
-              sleep 2
-            end  
+    unless disk_attached?(gce, new_resource.instance_name, opts[:deviceName])
+      converge_by("attach disk #{new_resource.name}") do
+        gce.attach_disk(
+            new_resource.instance_name,
+            new_resource.zone_name,
+            source.self_link,
+            opts)
+        if new_resource.wait_for
+          Timeout::timeout(new_resource.timeout) do
+            while true
+              if disk_attached?(gce, new_resource.instance_name, deviceName)
+                Chef::Log.debug("#{new_resource.name} attached to #{new_resource.instance_name}")
+                break
+              else
+                Chef::Log.debug("Waiting 2 seconds for disk #{new_resource.name} to be attached")
+                sleep 2
+              end
+            end
           end
+        else
+          Chef::Log.debug("Not waiting to attach disk #{new_resource.name}")
         end
-      else
-        Chef::Log.debug("Not waiting to attach disk #{new_resource.name}")
       end
     end
   rescue Timeout::Error
@@ -157,8 +165,8 @@ end
 private
 
 def disk_attached?(connection, instance, device)
-  server = gce.servers.detect {|s| s.name == instance}
-  disk = server.disks.detect {|d| d['device_name'] == device}
+  server = connection.servers.detect {|s| s.name == instance}
+  disk = server.disks.detect {|d| d['deviceName'] == device}
   if disk == nil
     return false
   else
@@ -166,8 +174,12 @@ def disk_attached?(connection, instance, device)
   end
 end
 
+def disk_exists?(connection, device)
+  return connection.disks.get(device) == nil
+end
+
 def disk_ready?(connection, name)
-  disk = gce.disks.detect {|d| d.name == name}
+  disk = connection.disks.detect {|d| d.name == name}
   if disk == nil
     return false
   else
